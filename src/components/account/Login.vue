@@ -91,7 +91,6 @@ const useAccount = useAccountStore();
 
 const validate = Yup.object().shape({
     email: Yup.string()
-        .email('Debe ser un correo válido')
         .required('El correo es obligatorio'),
     password: Yup.string()
         .required('La contraseña es obligatoria')
