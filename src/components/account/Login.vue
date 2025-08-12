@@ -91,7 +91,6 @@ const useAccount = useAccountStore();
 
 const validate = Yup.object().shape({
     email: Yup.string()
-        .email('Debe ser un correo válido')
         .required('El correo es obligatorio'),
     password: Yup.string()
         .required('La contraseña es obligatoria')
@@ -111,7 +110,7 @@ const router = useRouter();
 async function login() {
     const response = await useAccount.login(email.value, password.value);
 
-    if (response.statusCode === 200) {
+    if (response.status === 200) {
         router.push('/home');
     } else {
         router.push('/');

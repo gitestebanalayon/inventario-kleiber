@@ -31,9 +31,9 @@ const queryClient = useQueryClient();
 
 
 const useAccount = useAccountStore();
-useAccount.listGmail();
+// useAccount.listGmail();
 onMounted(async () => {
-    await useAccount.filterProfile();
+    // await useAccount.filterProfile();
 })
 
 const handleApiError = async (error) => {
@@ -41,7 +41,7 @@ const handleApiError = async (error) => {
 
 const { isLoading, isError, data: listgmail, error, refetch: refetchGmails } = useQuery({
     queryKey: ['gmails'],
-    queryFn: () => useAccount.listGmail(),
+    // queryFn: () => useAccount.listGmail(),
     onError: handleApiError,
 });
 

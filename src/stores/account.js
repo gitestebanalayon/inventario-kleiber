@@ -54,28 +54,29 @@ export const useAccountStore = defineStore('account', {
         },
 
         // Funciones para manejar la gestión de la cuenta
-        async login(email, password) {
+        async login(username, password) {
             try {
                 this.apiName = 'login';
                 this.clearAlerts(); // Limpia cualquier alerta existente
 
                 // const simulateDelay = async (ms) => new Promise(resolve => setTimeout(resolve, ms));
-                const response = await axios.post(`${BASE_URL}api/v1/auth/login`, { 'email': email, 'password': password });
+                const response = await axios.post(`${BASE_URL}auth/login`, { 'username': username, 'password': password });
                 // await simulateDelay(2000);
 
+                console.log(response);
+                
 
+                if (response.status === 200) {
+                    
 
-                if (response.data.statusCode === 200) {
-                    const token = response.data.data.token;
+                    const token = response.data.access;
                     const decodedToken = jwt_decode(token);
 
                     // Guardamos los datos en sessionStorage
                     const userData = {
                         token,
-                        id: decodedToken.id,
-                        email: decodedToken.email,
-                        first_name: decodedToken.first_name,
-                        last_name: decodedToken.last_name,
+                        id: decodedToken.user_id,
+                        email: 'kleiber8113@gmail.com',
                     };
                     sessionStorage.setItem("user", JSON.stringify(userData));
 
@@ -84,18 +85,22 @@ export const useAccountStore = defineStore('account', {
                     await simulateDelay(5000);
 
                     this.isAuthenticated = true;
-                    return response.data;
+                    return response;
                 }
                 return false;
             } catch (error) {
                 this.loadingPage = false;
                 this.apiName = null;
-                switch (error?.response?.data?.statusCode) {
+
+             
+                
+
+                switch (error?.status) {
                     case 401:
                         this.addAlert({
                             type: 'danger',
                             title: '¡Credenciales inválidas!',
-                            message: error.response.data.message,
+                            message: error.response.data.detail,
                             scope: 'login',
                         });
                         break;
@@ -370,26 +375,28 @@ export const useAccountStore = defineStore('account', {
 
                 const headers = { Authorization: `Bearer ${user.token}` };
                 // const simulateDelay = async (ms) => new Promise(resolve => setTimeout(resolve, ms));
-                const response = await axios.get(`${BASE_URL}api/v1/account/filter/profile`, { headers });
+                // const response = await axios.get(`${BASE_URL}api/v1/account/filter/profile`, { headers });
                 // await simulateDelay(3000);
+                console.log(response);
+                
 
-                if (response.data.statusCode === 200) {
-                    this.profile = {
-                        username: response.data.data.username,
-                        origen: response.data.data.origen,
-                        ci: response.data.data.ci,
-                        first_name: response.data.data.first_name,
-                        last_name: response.data.data.last_name,
-                        birthdate: response.data.data.birthdate,
-                        phone: response.data.data.phone,
-                        gmail: response.data.data.gmail_id[0].gmail
-                    }
-                }
+                // if (response.data.statusCode === 200) {
+                //     this.profile = {
+                //         username: response.data.data.username,
+                //         origen: response.data.data.origen,
+                //         ci: response.data.data.ci,
+                //         first_name: response.data.data.first_name,
+                //         last_name: response.data.data.last_name,
+                //         birthdate: response.data.data.birthdate,
+                //         phone: response.data.data.phone,
+                //         gmail: response.data.data.gmail_id[0].gmail
+                //     }
+                // }
 
-                if (response.data.statusCode === 401) {
-                    this.isAuthenticated === false;
-                    sessionStorage.clear();
-                }
+                // if (response.data.statusCode === 401) {
+                //     this.isAuthenticated === false;
+                //     sessionStorage.clear();
+                // }
 
             } catch (error) {
                 this.apiName = null;
@@ -444,8 +451,8 @@ export const useAccountStore = defineStore('account', {
                         break;
                 }
 
-                this.isAuthenticated === false;
-                sessionStorage.clear();
+                // this.isAuthenticated === false;
+                // sessionStorage.clear();
             } finally {
                 this.apiName = null;
             }
