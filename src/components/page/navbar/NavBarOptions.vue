@@ -17,6 +17,7 @@ import ItemsSub from './NavBarOptionsItemsSub.vue';
                         <Items class="mt-1" :icon="['fab', 'dropbox']" name="Cajas" routs="/cajas" />
                         <Items :icon="['fas', 'layer-group']" name="Categorias" routs="/categorias" />
                         <Items :icon="['fas', 'folder-open']" name="Archivos" routs="/archivos" />
+                        <Items :icon="['fas', 'layer-group']" name="Bienes" routs="/Bienes" />
 
 
                         <li>
