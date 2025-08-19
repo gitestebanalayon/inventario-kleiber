@@ -1,12 +1,14 @@
 <script setup>
 // agrega onBeforeUnmount, computed, watch si no estaban
 import { ref, reactive, onMounted, onBeforeUnmount, computed, watch } from 'vue'
-import axios from 'axios';
-import FooterPage from '@/components/page/footer/Component.vue';
-import HeaderPage from '@/components/page/header/Component.vue';
+import axios        from 'axios';
+import FooterPage   from '@/components/page/footer/Component.vue';
+import HeaderPage   from '@/components/page/header/Component.vue';
 import { IconEdit } from '@tabler/icons-vue'
-import { Toast } from 'bootstrap'
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+import { Toast }    from 'bootstrap'
+import Pagination   from '@/components/paginacion/paginacion.vue'
+import SearchInput  from '@/components/paginacion/searchInput.vue'
+const BASE_URL =    import.meta.env.VITE_BASE_URL;
 
 // === Estado ===
 const bienes = ref([]);
@@ -243,30 +245,10 @@ watch(search, () => debouncedSearch())
               </div>
               <div class="col-md-auto col-sm-12">
                 <div class="ms-auto d-flex flex-wrap btn-list">
-                  <div class="input-group input-group-flat w-auto">
-                    <span class="input-group-text">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                        class="icon icon-1">
-                        <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
-                        <path d="M21 21l-6 -6" />
-                      </svg>
-                    </span>
+                  
+                  <!-- Componente search input -->
 
-                    <!-- 🔎 conecta v-model y ref para Ctrl/⌘+K -->
-                    <input id="advanced-table-search" type="text" class="form-control" autocomplete="off"
-                      placeholder="Buscar… (Ctrl/⌘ + K)" v-model.trim="search" ref="searchInputEl" />
-
-                    <!-- botón limpiar -->
-                    <button class="input-group-text btn btn-link px-2" v-if="search" @click.prevent="search = ''"
-                      title="Limpiar búsqueda">
-                      ×
-                    </button>
-
-                    <span class="input-group-text">
-                      <kbd>ctrl + K</kbd>
-                    </span>
-                  </div>
+                  <SearchInput v-model="search" />
 
                   <a href="#" class="btn btn-icon" aria-label="Button">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -326,41 +308,10 @@ watch(search, () => debouncedSearch())
                 </tr>
               </tbody>
             </table>
-            <div class="d-flex align-items-center justify-content-between p-3">
-              <div class="d-flex gap-2 align-items-center">
-                <span>Mostrar:</span>
-                <select class="form-select w-auto" v-model.number="pageSize">
-                  <option :value="5">5</option>
-                  <option :value="10">10</option>
-                  <option :value="20">20</option>
-                  <option :value="50">50</option>
-                </select>
-                <span class="text-secondary">
-                  {{ bienes.length ? (page - 1) * pageSize + 1 : 0 }}–{{ (page - 1) * pageSize + bienes.length }}
-                  de {{ total }}
-                </span>
-              </div>
-
-              <nav aria-label="Paginación">
-                <ul class="pagination m-0">
-                  <li class="page-item" :class="{ disabled: page === 1 }">
-                    <a class="page-link" href="#" @click.prevent="goTo(page - 1)">«</a>
-                  </li>
-
-                  <!-- ventana corta de páginas: actual ±2 -->
-                  <li v-for="p in pageWindow" :key="p" class="page-item" :class="{ active: p === page }">
-                    <a class="page-link" href="#" @click.prevent="goTo(p)">{{ p }}</a>
-                  </li>
-
-
-                  <li class="page-item" :class="{ disabled: page === totalPages }">
-                    <a class="page-link" href="#" @click.prevent="goTo(page + 1)">»</a>
-                  </li>
-                </ul>
-              </nav>
-            </div>
+            <Pagination v-model:page="page" v-model:pageSize="pageSize" :total="total" />
 
           </div>
+
         </div>
 
         <!-- Modal reutilizable Crear/Editar -->
