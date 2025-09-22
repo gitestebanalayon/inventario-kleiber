@@ -17,9 +17,9 @@ tr th{
     text-align: center !important;
 }
 
-tr th:nth-child(7){
+/* tr th:nth-child(7){
     display: none;
-}
+} */
 
 [data-bs-theme="dark"] tr th{
     border-bottom: 1px solid rgb(34, 48, 65) !important;

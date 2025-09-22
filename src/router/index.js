@@ -6,6 +6,7 @@ import ProfileView from '../views/ProfileView.vue'
 import { useAccountStore } from '../stores/account'; // Asegúrate de importar el store correctamente
 import RoleView from '@/views/RoleView.vue'
 import BienesView from '@/views/BienesView.vue'
+import PrestamosView from '@/views/PrestamosView.vue'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -119,6 +120,14 @@ const router = createRouter({
       name: 'Bienes',
       component: BienesView
     },
+    
+    {
+      path: '/Prestamos',
+      name: 'Prestámos',
+      component: PrestamosView
+    },
+
+
   ]
 })
 
