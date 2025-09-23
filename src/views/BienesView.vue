@@ -14,6 +14,7 @@ const BASE_URL =    import.meta.env.VITE_BASE_URL;
 const bienes = ref([]);
 const showCrear = ref(false)
 const categorias = ref([]);
+const subcategorias = ref([]);
 const modelos = ref([])
 const loadingCrear = ref(false);
 const toastSuccess = ref(null)
@@ -88,6 +89,8 @@ onMounted(async () => {
     await fetchBienes() // 👈 ahora pide página 1
     const { data: cats } = await axios.get(`${BASE_URL}categoria/`);
     categorias.value = cats;
+    const { data: subcats } = await axios.get(`${BASE_URL}categoria/listar`);
+    subcategorias.value = subcats;
     const { data: mods } = await axios.get(`${BASE_URL}modelo/`);
     modelos.value = mods;
   } catch (error) {
@@ -288,9 +291,11 @@ watch(search, () => debouncedSearch())
                   <td>
                     <span :class="[
                       'badge',
-                      bien.estatus === 'Asignado'
+                      bien.estatus === 'Disponible'
                         ? 'bg-success-lt'
-                        : bien.estatus === 'Incorporado'
+                        : bien.estatus === 'Mantenimiento'
+                          ? 'bg-warning-lt'
+                          : bien.estatus === 'Prestado'
                           ? 'bg-primary-lt'
                           : bien.estatus === 'Desincorporado'
                             ? 'bg-danger-lt'
@@ -334,11 +339,20 @@ watch(search, () => debouncedSearch())
                   </div>
 
                   <!-- Categoría -->
+                    <div class="col-md-4">
+                      <label class="form-label">Categoría *</label>
+                      <select v-model="form.categoria_id" class="form-select">
+                        <option value="" disabled>Selecciona…</option>
+                        <option v-for="c in categorias" :key="c.id" :value="c.id">{{ c.descripcion }}</option>
+                      </select>
+                    </div>
+
+                  <!-- Subcategoría-->
                   <div class="col-md-4">
-                    <label class="form-label">Categoría *</label>
-                    <select v-model="form.categoria_id" class="form-select">
+                    <label class="form-label">Subcategoría *</label>
+                    <select v-model="form.subcategoria_id" class="form-select">
                       <option value="" disabled>Selecciona…</option>
-                      <option v-for="c in categorias" :key="c.id" :value="c.id">{{ c.descripcion }}</option>
+                      <option v-for="sc in subcategorias" :key="sc.id" :value="sc.id">{{ sc.descripcion }}</option>
                     </select>
                   </div>
 
@@ -386,12 +400,10 @@ watch(search, () => debouncedSearch())
                   <div class="col-md-4">
                     <label class="form-label">Estado *</label>
                     <select v-model="form.estatus" class="form-select">
-                      <option>Incorporado</option>
-                      <option>Asignado</option>
-                      <option>En traslado</option>
+                      <option>Disponible</option>
                       <option>Prestado</option>
+                      <option>En Mantenimiento</option>
                       <option>Desincorporado</option>
-                      <option>Mantenimiento</option>
                     </select>
                   </div>
 
