@@ -14,6 +14,9 @@ import { IconArrowBack, IconArrowBackUp, IconRotate, IconRefresh } from '@tabler
 
 // Datos simulados (pueden venir de tu API Django)
 const bienesSeleccionados = ref([])
+// const responsablesSeleccionados = ref([])
+const responsables = ref([])
+
 
 // Estado
 const prestamos = ref([])
@@ -47,11 +50,18 @@ const search = ref('')
 const form = reactive({
   fecha_inicio: '',
   fecha_final: '',
-  encargado: '',
-  ubicacion_departamento_id: '',
+  departamento_entrega_id: null,
+  departamento_recibe_id: null,
   motivo_id: '',
-  bienes: [], // array de IDs de bienes seleccionados
+  bienes: [],
+
+  // Responsables separados
+  responsable_entrega: null,
+  responsable_recibe: null,
+  testigo_entrega: null,
+  testigo_recibe: null,
 })
+
 
 const initialForm = { ...form }
 
@@ -95,6 +105,10 @@ const fetchAuxiliares = async () => {
   motivos.value = mot
   const { data: bns } = await axios.get(`${BASE_URL}bienes/listar`)
   bienes.value = bns.results
+  const { data: resp } = await axios.get(`${BASE_URL}auxiliares/listar-responsables`)
+  responsables.value = resp
+
+
 }
 
 const abrirModal = () => {
@@ -129,16 +143,34 @@ const guardarPrestamo = async () => {
   errorCrear.value = ''
   loadingCrear.value = true
   try {
-    // Mapear bienesSeleccionados a IDs
+    // Mapear bienes
     form.bienes = bienesSeleccionados.value.map((b) => ({
-      bien_id: b.id, // importante: usar la clave bien_id
+      bien_id: b.id,
     }))
 
-    if (isEdit.value && idEdit.value) {
-      await axios.put(`${BASE_URL}prestamos/${idEdit.value}`, form)
-    } else {
-      await axios.post(`${BASE_URL}prestamos/`, form)
+    // Reunir responsables en un array
+    const responsablesIds = [
+      form.responsable_entrega,
+      form.responsable_recibe,
+      form.testigo_entrega,
+      form.testigo_recibe,
+    ]
+
+    // Si tu backend espera "responsables": []
+    const payload = {
+      ...form,
+      responsables: responsablesIds,
     }
+
+    let prestamoId = null
+    if (isEdit.value && idEdit.value) {
+      await axios.put(`${BASE_URL}prestamos/${idEdit.value}`, payload)
+      prestamoId = idEdit.value
+    } else {
+      const res = await axios.post(`${BASE_URL}prestamos/`, payload)
+      prestamoId = res.data.id
+    }
+
     await fetchPrestamos()
     showCrear.value = false
     mostrarToast()
@@ -149,6 +181,7 @@ const guardarPrestamo = async () => {
     loadingCrear.value = false
   }
 }
+
 
 const guardarDevolucion = async () => {
   try {
@@ -194,20 +227,11 @@ watch(search, () => {
       <div class="container-xl">
         <div class="card">
           <!-- Toast -->
-          <div
-            class="toast align-items-center text-white bg-success border-0 position-fixed top-0 end-0 m-3"
-            ref="toastSuccess"
-            role="alert"
-            aria-live="assertive"
-            aria-atomic="true"
-          >
+          <div class="toast align-items-center text-white bg-success border-0 position-fixed top-0 end-0 m-3"
+            ref="toastSuccess" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
               <div class="toast-body">{{ toastMessage }}</div>
-              <button
-                type="button"
-                class="btn-close btn-close-white me-2 m-auto"
-                data-bs-dismiss="toast"
-              ></button>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
             </div>
           </div>
 
@@ -223,11 +247,13 @@ watch(search, () => {
             <table class="table table-striped table-vcenter card-table">
               <thead>
                 <tr>
-                  <th>Encargado</th>
+                
                   <th>Motivo</th>
                   <th>Fecha inicio</th>
                   <th>Fecha fin</th>
-                  <th>Dependencia</th>
+                  <th>Dependencia que Entrega</th>
+                  <th>Dependencia que Recibe</th>
+                  <th>Responsable que Recibe</th>
                   <th>Bienes</th>
                   <th>Estatus</th>
                   <th>Acciones</th>
@@ -235,11 +261,13 @@ watch(search, () => {
               </thead>
               <tbody>
                 <tr v-for="p in prestamos" :key="p.id">
-                  <td>{{ p.encargado }}</td>
                   <td>{{ p.motivo }}</td>
                   <td>{{ p.fecha_inicio }}</td>
                   <td>{{ p.fecha_final }}</td>
-                  <td>{{ p.ubicacion_departamento }}</td>
+                  <td>{{ p.departamento_entrega}}</td>
+                  <td>{{ p.departamento_recibe}}</td>
+                  <td>{{ p.respo_recibe}}</td>
+
                   <td>
                     <ul>
                       <li v-for="d in p.detalles" :key="d.id">
@@ -248,25 +276,19 @@ watch(search, () => {
                     </ul>
                   </td>
                   <td>
-                    <span
-                      :class="[
-                        'badge',
-                        p.status === 'EN_PRESTAMO'
-                          ? 'bg-primary-lt'
-                          : p.status === 'DEVUELTO'
-                            ? 'bg-success-lt'
-                            : 'bg-danger-lt',
-                      ]"
-                    >
+                    <span :class="[
+                      'badge',
+                      p.status === 'EN_PRESTAMO'
+                        ? 'bg-primary-lt'
+                        : p.status === 'DEVUELTO'
+                          ? 'bg-success-lt'
+                          : 'bg-danger-lt',
+                    ]">
                       {{ p.status }}
                     </span>
                   </td>
                   <td>
-                    <a
-                      class="btn btn-action"
-                      @click.prevent="abrirDevolucion(p)"
-                      title="Devolución"
-                    >
+                    <a class="btn btn-action" @click.prevent="abrirDevolucion(p)" title="Devolución">
                       <IconArrowBack size="24" stroke-width="1.5" />
                     </a>
                   </td>
@@ -287,86 +309,122 @@ watch(search, () => {
           </div>
         </div>
 
-        <!-- Modal Crear/Editar -->
-        <div v-if="showCrear" class="modal fade show d-block">
-          <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content card">
-              <div class="card-header d-flex justify-content-between">
-                <h3 class="card-title">{{ isEdit ? 'Editar préstamo' : 'Nuevo préstamo' }}</h3>
-                <button class="btn-close" @click="showCrear = false"></button>
-              </div>
 
-              <div class="card-body">
-                <div v-if="errorCrear" class="alert alert-danger">{{ errorCrear }}</div>
-
-                <div class="row g-2">
-                  <div class="col-md-6">
-                    <label class="form-label">Encargado *</label>
-                    <input v-model="form.encargado" class="form-control" />
-                  </div>
-
-                  <div class="col-md-6">
-                    <label class="form-label">Dependencia *</label>
-                    <select v-model="form.ubicacion_departamento_id" class="form-select">
-                      <option v-for="d in dependencias" :key="d.id" :value="d.id">
-                        {{ d.nombre }}
-                      </option>
-                    </select>
-                  </div>
-
-                  <div class="col-md-6">
-                    <label class="form-label">Motivo *</label>
-                    <select v-model="form.motivo_id" class="form-select">
-                      <option v-for="m in motivos" :key="m.id" :value="m.id">
-                        {{ m.descripcion }}
-                      </option>
-                    </select>
-                  </div>
-
-                  <div class="col-md-3">
-                    <label class="form-label">Fecha inicio *</label>
-                    <input v-model="form.fecha_inicio" type="date" class="form-control" />
-                  </div>
-
-                  <div class="col-md-3">
-                    <label class="form-label">Fecha fin *</label>
-                    <input v-model="form.fecha_final" type="date" class="form-control" />
-                  </div>
-
-                  <!-- Bienes múltiples -->
-                  <Multiselect
-                    v-model="bienesSeleccionados"
-                    :options="bienes"
-                    :multiple="true"
-                    :close-on-select="false"
-                    track-by="id"
-                    placeholder="Seleccione los bienes"
-                  >
-                    <template #option="{ option }">
-                      {{ option.cod_bien }} - {{ option.subcategoria }}
-                    </template>
-                    <template #tag="{ option, remove }">
-                      <span class="multiselect__tag">
-                        <span>{{ option.cod_bien }} - {{ option.subcategoria.descripcion }}</span>
-                        <i class="multiselect__tag-icon" @click="remove(option)"></i>
-                      </span>
-                    </template>
-                  </Multiselect>
-                </div>
-              </div>
-
-              <div class="card-footer d-flex justify-content-end gap-2">
-                <button class="btn btn-secondary" @click="showCrear = false">Cancelar</button>
-                <button class="btn btn-primary" :disabled="loadingCrear" @click="guardarPrestamo">
-                  {{ loadingCrear ? 'Guardando…' : 'Guardar' }}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div v-if="showCrear" class="modal-backdrop fade show"></div>
       </div>
     </div>
+
+    <!-- Modal Crear/Editar -->
+    <div v-if="showCrear" class="modal fade show d-block">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content card">
+          <div class="card-header d-flex justify-content-between">
+            <h3 class="card-title">{{ isEdit ? 'Editar préstamo' : 'Nuevo préstamo' }}</h3>
+            <button class="btn-close" @click="showCrear = false"></button>
+          </div>
+
+            <div class="card-body">
+            <div v-if="errorCrear" class="alert alert-danger">{{ errorCrear }}</div>
+            <div class="row g-3">
+              <div class="col-md-6">
+              <label class="form-label">Unidad que Entrega *</label>
+              <select v-model="form.responsable_entrega" class="form-select">
+                <option v-for="r in responsables" :key="r.id" :value="r.id">
+                {{ r.persona }}
+                </option>
+              </select>
+              </div>
+
+              <div class="col-md-6">
+              <label class="form-label">Unidad que Recibe *</label>
+              <select v-model="form.responsable_recibe" class="form-select">
+                <option v-for="r in responsables" :key="r.id" :value="r.id">
+                {{ r.persona }}
+                </option>
+              </select>
+              </div>
+
+              <div class="col-md-6">
+              <label class="form-label">Testigo Unidad que Entrega *</label>
+              <select v-model="form.testigo_entrega" class="form-select">
+                <option v-for="r in responsables" :key="r.id" :value="r.id">
+                {{ r.persona }}
+                </option>
+              </select>
+              </div>
+
+              <div class="col-md-6">
+              <label class="form-label">Testigo Unidad que Recibe *</label>
+              <select v-model="form.testigo_recibe" class="form-select">
+                <option v-for="r in responsables" :key="r.id" :value="r.id">
+                {{ r.persona }}
+                </option>
+              </select>
+              </div>
+
+              <div class="col-md-6">
+              <label class="form-label">Dependencia que Entrega *</label>
+              <select v-model="form.departamento_entrega_id" class="form-select">
+                <option v-for="d in dependencias" :key="d.id" :value="d.id">
+                {{ d.nombre }}
+                </option>
+              </select>
+              </div>
+
+              <div class="col-md-6">
+              <label class="form-label">Dependencia que Recibe *</label>
+              <select v-model="form.departamento_recibe_id" class="form-select">
+                <option v-for="d in dependencias" :key="d.id" :value="d.id">
+                {{ d.nombre }}
+                </option>
+              </select>
+              </div>
+
+              <div class="col-md-6">
+              <label class="form-label">Motivo *</label>
+              <select v-model="form.motivo_id" class="form-select">
+                <option v-for="m in motivos" :key="m.id" :value="m.id">
+                {{ m.descripcion }}
+                </option>
+              </select>
+              </div>
+              <div class="col-md-3">
+              <label class="form-label">Fecha inicio *</label>
+              <input v-model="form.fecha_inicio" type="date" class="form-control" />
+              </div>
+              <div class="col-md-3">
+              <label class="form-label">Fecha fin *</label>
+              <input v-model="form.fecha_final" type="date" class="form-control" />
+              </div>
+              <div class="col-12">
+              <label class="form-label">Bienes *</label>
+              <Multiselect v-model="bienesSeleccionados" :options="bienes" :multiple="true" :close-on-select="false"
+                track-by="id" placeholder="Seleccione los bienes">
+                <template #option="{ option }">
+                {{ option.cod_bien }} - {{ option.subcategoria }}
+                </template>
+                <template #tag="{ option, remove }">
+                <span class="multiselect__tag">
+                  <span>{{ option.cod_bien }} - {{ option.subcategoria.descripcion }}</span>
+                  <i class="multiselect__tag-icon" @click="remove(option)"></i>
+                </span>
+                </template>
+              </Multiselect>
+              </div>
+            </div>
+            </div>
+
+          <!-- FOOTER DEBE IR AQUÍ DENTRO -->
+          <div class="card-footer d-flex justify-content-end gap-2">
+            <button class="btn btn-secondary" @click="showCrear = false">Cancelar</button>
+            <button class="btn btn-primary" :disabled="loadingCrear" @click="guardarPrestamo">
+              {{ loadingCrear ? 'Guardando…' : 'Guardar' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="showCrear" class="modal-backdrop fade show"></div>
+
 
     <!-- Modal Devolución -->
     <div v-if="showDevolucion" class="modal fade show d-block">
