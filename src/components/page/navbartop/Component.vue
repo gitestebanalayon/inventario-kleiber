@@ -3,7 +3,7 @@ import FormSearch from './FormSearch.vue'
 import ThemeMode from './ThemeMode.vue'
 import DropDown from './DropDown.vue'
 
-import avatar from '@/assets/img/esteban.jpg';
+import avatar from '@/assets/img/perfil_default.png';
 import { RouterLink } from 'vue-router'
 import { useAccountStore } from '@/stores/account';
 import { useRouter } from 'vue-router';

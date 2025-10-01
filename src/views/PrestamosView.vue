@@ -10,7 +10,7 @@ import { IconEdit } from '@tabler/icons-vue'
 const BASE_URL = import.meta.env.VITE_BASE_URL
 import Multiselect from 'vue-multiselect'
 import 'vue-multiselect/dist/vue-multiselect.css'
-import { IconArrowBack, IconArrowBackUp, IconRotate, IconRefresh } from '@tabler/icons-vue'
+import { IconArrowBack, IconArrowBackUp, IconPrinter, IconRotate, IconRefresh } from '@tabler/icons-vue'
 
 // Datos simulados (pueden venir de tu API Django)
 const bienesSeleccionados = ref([])
@@ -105,7 +105,7 @@ const fetchAuxiliares = async () => {
   motivos.value = mot
   const { data: bns } = await axios.get(`${BASE_URL}bienes/listar`)
   bienes.value = bns.results
-  const { data: resp } = await axios.get(`${BASE_URL}auxiliares/listar-responsables`)
+  const { data: resp } = await axios.get(`${BASE_URL}auxiliares/responsables`)
   responsables.value = resp
 
 
@@ -148,18 +148,38 @@ const guardarPrestamo = async () => {
       bien_id: b.id,
     }))
 
-    // Reunir responsables en un array
-    const responsablesIds = [
-      form.responsable_entrega,
-      form.responsable_recibe,
-      form.testigo_entrega,
-      form.testigo_recibe,
-    ]
+    // Reunir responsables con rol
+  const responsablesData = []
+
+  if (form.responsable_entrega) {
+    responsablesData.push({
+      responsable_id: form.responsable_entrega,
+      rol: "RESP_ENTREGA",
+    })
+  }
+  if (form.responsable_recibe) {
+    responsablesData.push({
+      responsable_id: form.responsable_recibe,
+      rol: "RESP_RECIBE",
+    })
+  }
+  if (form.testigo_entrega) {
+    responsablesData.push({
+      responsable_id: form.testigo_entrega,
+      rol: "TESTIGO_ENTREGA",
+    })
+  }
+  if (form.testigo_recibe) {
+    responsablesData.push({
+      responsable_id: form.testigo_recibe,
+      rol: "TESTIGO_RECIBE",
+    })
+  }
 
     // Si tu backend espera "responsables": []
     const payload = {
       ...form,
-      responsables: responsablesIds,
+      responsables: responsablesData,
     }
 
     let prestamoId = null
@@ -206,6 +226,8 @@ const guardarDevolucion = async () => {
   }
 }
 
+
+
 // Hooks
 onMounted(async () => {
   await fetchPrestamos()
@@ -247,7 +269,7 @@ watch(search, () => {
             <table class="table table-striped table-vcenter card-table">
               <thead>
                 <tr>
-                
+
                   <th>Motivo</th>
                   <th>Fecha inicio</th>
                   <th>Fecha fin</th>
@@ -264,9 +286,12 @@ watch(search, () => {
                   <td>{{ p.motivo }}</td>
                   <td>{{ p.fecha_inicio }}</td>
                   <td>{{ p.fecha_final }}</td>
-                  <td>{{ p.departamento_entrega}}</td>
-                  <td>{{ p.departamento_recibe}}</td>
-                  <td>{{ p.respo_recibe}}</td>
+                  <td>{{ p.departamento_entrega }}</td>
+                  <td>{{ p.departamento_recibe }}</td>
+                  <td>
+                    {{p.responsables.find(r => r.rol === 'RESP_RECIBE')?.persona.nombres_apellidos || '—'}}
+                  </td>
+
 
                   <td>
                     <ul>
@@ -279,10 +304,10 @@ watch(search, () => {
                     <span :class="[
                       'badge',
                       p.status === 'EN_PRESTAMO'
-                        ? 'bg-primary-lt'
+                        ? 'bg-primary'
                         : p.status === 'DEVUELTO'
-                          ? 'bg-success-lt'
-                          : 'bg-danger-lt',
+                          ? 'bg-success'
+                          : 'bg-danger',
                     ]">
                       {{ p.status }}
                     </span>
@@ -290,6 +315,11 @@ watch(search, () => {
                   <td>
                     <a class="btn btn-action" @click.prevent="abrirDevolucion(p)" title="Devolución">
                       <IconArrowBack size="24" stroke-width="1.5" />
+                    </a>
+                  </td>
+                  <td>
+                    <a class="btn btn-action" @click.prevent="GenerarActa(p)" title="Generar Acta">
+                      <IconPrinter size="24" stroke-width="1.5" />
                     </a>
                   </td>
                 </tr>
@@ -322,96 +352,96 @@ watch(search, () => {
             <button class="btn-close" @click="showCrear = false"></button>
           </div>
 
-            <div class="card-body">
+          <div class="card-body">
             <div v-if="errorCrear" class="alert alert-danger">{{ errorCrear }}</div>
             <div class="row g-3">
               <div class="col-md-6">
-              <label class="form-label">Unidad que Entrega *</label>
-              <select v-model="form.responsable_entrega" class="form-select">
-                <option v-for="r in responsables" :key="r.id" :value="r.id">
-                {{ r.persona }}
-                </option>
-              </select>
+                <label class="form-label">Unidad que Entrega *</label>
+                <select v-model="form.responsable_entrega" class="form-select">
+                  <option v-for="r in responsables" :key="r.id" :value="r.id">
+                    {{ r.persona }}
+                  </option>
+                </select>
               </div>
 
               <div class="col-md-6">
-              <label class="form-label">Unidad que Recibe *</label>
-              <select v-model="form.responsable_recibe" class="form-select">
-                <option v-for="r in responsables" :key="r.id" :value="r.id">
-                {{ r.persona }}
-                </option>
-              </select>
+                <label class="form-label">Unidad que Recibe *</label>
+                <select v-model="form.responsable_recibe" class="form-select">
+                  <option v-for="r in responsables" :key="r.id" :value="r.id">
+                    {{ r.persona }}
+                  </option>
+                </select>
               </div>
 
               <div class="col-md-6">
-              <label class="form-label">Testigo Unidad que Entrega *</label>
-              <select v-model="form.testigo_entrega" class="form-select">
-                <option v-for="r in responsables" :key="r.id" :value="r.id">
-                {{ r.persona }}
-                </option>
-              </select>
+                <label class="form-label">Testigo Unidad que Entrega *</label>
+                <select v-model="form.testigo_entrega" class="form-select">
+                  <option v-for="r in responsables" :key="r.id" :value="r.id">
+                    {{ r.persona }}
+                  </option>
+                </select>
               </div>
 
               <div class="col-md-6">
-              <label class="form-label">Testigo Unidad que Recibe *</label>
-              <select v-model="form.testigo_recibe" class="form-select">
-                <option v-for="r in responsables" :key="r.id" :value="r.id">
-                {{ r.persona }}
-                </option>
-              </select>
+                <label class="form-label">Testigo Unidad que Recibe *</label>
+                <select v-model="form.testigo_recibe" class="form-select">
+                  <option v-for="r in responsables" :key="r.id" :value="r.id">
+                    {{ r.persona }}
+                  </option>
+                </select>
               </div>
 
               <div class="col-md-6">
-              <label class="form-label">Dependencia que Entrega *</label>
-              <select v-model="form.departamento_entrega_id" class="form-select">
-                <option v-for="d in dependencias" :key="d.id" :value="d.id">
-                {{ d.nombre }}
-                </option>
-              </select>
+                <label class="form-label">Dependencia que Entrega *</label>
+                <select v-model="form.departamento_entrega_id" class="form-select">
+                  <option v-for="d in dependencias" :key="d.id" :value="d.id">
+                    {{ d.nombre }}
+                  </option>
+                </select>
               </div>
 
               <div class="col-md-6">
-              <label class="form-label">Dependencia que Recibe *</label>
-              <select v-model="form.departamento_recibe_id" class="form-select">
-                <option v-for="d in dependencias" :key="d.id" :value="d.id">
-                {{ d.nombre }}
-                </option>
-              </select>
+                <label class="form-label">Dependencia que Recibe *</label>
+                <select v-model="form.departamento_recibe_id" class="form-select">
+                  <option v-for="d in dependencias" :key="d.id" :value="d.id">
+                    {{ d.nombre }}
+                  </option>
+                </select>
               </div>
 
               <div class="col-md-6">
-              <label class="form-label">Motivo *</label>
-              <select v-model="form.motivo_id" class="form-select">
-                <option v-for="m in motivos" :key="m.id" :value="m.id">
-                {{ m.descripcion }}
-                </option>
-              </select>
+                <label class="form-label">Motivo *</label>
+                <select v-model="form.motivo_id" class="form-select">
+                  <option v-for="m in motivos" :key="m.id" :value="m.id">
+                    {{ m.descripcion }}
+                  </option>
+                </select>
               </div>
               <div class="col-md-3">
-              <label class="form-label">Fecha inicio *</label>
-              <input v-model="form.fecha_inicio" type="date" class="form-control" />
+                <label class="form-label">Fecha inicio *</label>
+                <input v-model="form.fecha_inicio" type="date" class="form-control" />
               </div>
               <div class="col-md-3">
-              <label class="form-label">Fecha fin *</label>
-              <input v-model="form.fecha_final" type="date" class="form-control" />
+                <label class="form-label">Fecha fin *</label>
+                <input v-model="form.fecha_final" type="date" class="form-control" />
               </div>
               <div class="col-12">
-              <label class="form-label">Bienes *</label>
-              <Multiselect v-model="bienesSeleccionados" :options="bienes" :multiple="true" :close-on-select="false"
-                track-by="id" placeholder="Seleccione los bienes">
-                <template #option="{ option }">
-                {{ option.cod_bien }} - {{ option.subcategoria }}
-                </template>
-                <template #tag="{ option, remove }">
-                <span class="multiselect__tag">
-                  <span>{{ option.cod_bien }} - {{ option.subcategoria.descripcion }}</span>
-                  <i class="multiselect__tag-icon" @click="remove(option)"></i>
-                </span>
-                </template>
-              </Multiselect>
+                <label class="form-label">Bienes *</label>
+                <Multiselect v-model="bienesSeleccionados" :options="bienes" :multiple="true" :close-on-select="false"
+                  track-by="id" placeholder="Seleccione los bienes">
+                  <template #option="{ option }">
+                    {{ option.cod_bien }} - {{ option.subcategoria }}
+                  </template>
+                  <template #tag="{ option, remove }">
+                    <span class="multiselect__tag">
+                      <span>{{ option.cod_bien }} - {{ option.subcategoria.descripcion }}</span>
+                      <i class="multiselect__tag-icon" @click="remove(option)"></i>
+                    </span>
+                  </template>
+                </Multiselect>
               </div>
             </div>
-            </div>
+          </div>
 
           <!-- FOOTER DEBE IR AQUÍ DENTRO -->
           <div class="card-footer d-flex justify-content-end gap-2">
@@ -449,7 +479,6 @@ watch(search, () => {
                   <select v-model="d.condicion_devolucion" class="form-select mt-2">
                     <option value="BUENO">En buen estado</option>
                     <option value="DAÑADO">Dañado</option>
-                    <option value="PERDIDO">Perdido</option>
                   </select>
                 </li>
               </ul>

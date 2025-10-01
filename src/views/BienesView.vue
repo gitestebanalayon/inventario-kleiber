@@ -292,14 +292,14 @@ watch(search, () => debouncedSearch())
                     <span :class="[
                       'badge',
                       bien.estatus === 'Disponible'
-                        ? 'bg-success-lt'
+                        ? 'bg-success'
                         : bien.estatus === 'Mantenimiento'
-                          ? 'bg-warning-lt'
+                          ? 'bg-warning'
                           : bien.estatus === 'Prestado'
-                          ? 'bg-primary-lt'
+                          ? 'bg-primary'
                           : bien.estatus === 'Desincorporado'
-                            ? 'bg-danger-lt'
-                            : 'bg-warning-lt'
+                            ? 'bg-danger'
+                            : 'bg-warning'
                     ]">
                       {{ bien.estatus }}
                     </span>
