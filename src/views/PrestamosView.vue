@@ -376,8 +376,26 @@ watch(search, () => {
           <div class="card-body">
             <div v-if="errorCrear" class="alert alert-danger">{{ errorCrear }}</div>
             <div class="row g-3">
+               <div class="col-md-6">
+                <label class="form-label">Dependencia que Entrega *</label>
+                <select v-model="form.departamento_entrega_id" class="form-select">
+                  <option v-for="d in dependencias" :key="d.id" :value="d.id">
+                    {{ d.nombre }}
+                  </option>
+                </select>
+              </div>
+
               <div class="col-md-6">
-                <label class="form-label">Unidad que Entrega *</label>
+                <label class="form-label">Dependencia que Recibe *</label>
+                <select v-model="form.departamento_recibe_id" class="form-select">
+                  <option v-for="d in dependencias" :key="d.id" :value="d.id">
+                    {{ d.nombre }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Responsable que Entrega *</label>
                 <select v-model="form.responsable_entrega" class="form-select">
                   <option v-for="r in responsables" :key="r.id" :value="r.id">
                     {{ r.persona }}
@@ -386,7 +404,7 @@ watch(search, () => {
               </div>
 
               <div class="col-md-6">
-                <label class="form-label">Unidad que Recibe *</label>
+                <label class="form-label">Responsable que Recibe *</label>
                 <select v-model="form.responsable_recibe" class="form-select">
                   <option v-for="r in responsables" :key="r.id" :value="r.id">
                     {{ r.persona }}
@@ -412,23 +430,7 @@ watch(search, () => {
                 </select>
               </div>
 
-              <div class="col-md-6">
-                <label class="form-label">Dependencia que Entrega *</label>
-                <select v-model="form.departamento_entrega_id" class="form-select">
-                  <option v-for="d in dependencias" :key="d.id" :value="d.id">
-                    {{ d.nombre }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label">Dependencia que Recibe *</label>
-                <select v-model="form.departamento_recibe_id" class="form-select">
-                  <option v-for="d in dependencias" :key="d.id" :value="d.id">
-                    {{ d.nombre }}
-                  </option>
-                </select>
-              </div>
+             
 
               <div class="col-md-6">
                 <label class="form-label">Motivo *</label>
