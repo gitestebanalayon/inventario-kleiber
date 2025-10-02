@@ -11,7 +11,7 @@ import { fas } from '@fortawesome/free-solid-svg-icons';
 import { fab } from '@fortawesome/free-brands-svg-icons';
 import { FontAwesomeIcon }  from "@fortawesome/vue-fontawesome";
 import { VueQueryPlugin }   from '@tanstack/vue-query'
-
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
 
 import 'vue-step-progress/dist/main.css';
