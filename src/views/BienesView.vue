@@ -274,6 +274,7 @@ watch(search, () => debouncedSearch())
                 <tr>
                   <th>Código</th>
                   <th>Categoría</th>
+                  <th>Subcategoria</th>
                   <th>Modelo</th>
                   <th>Condición</th>
                   <th>Estado</th>
@@ -286,6 +287,7 @@ watch(search, () => debouncedSearch())
                 <tr v-for="bien in bienes" :key="bien.id">
                   <td>{{ bien.cod_bien }}</td>
                   <td>{{ bien.categoria }}</td>
+                  <td>{{ bien.subcategoria }}</td>
                   <td>{{ bien.modelo }}</td>
                   <td>{{ bien.condicion }}</td>
                   <td>
